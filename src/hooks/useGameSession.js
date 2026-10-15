@@ -6,6 +6,7 @@ export const useGameSession = () => {
   const [highScore, setHighScore] = useState(0)
   const [settings, setSettings] = useState({
     playerName: '',
+    studentClass: '',
     soundEnabled: true,
     showTranslation: true,
     timerEnabled: false,

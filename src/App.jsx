@@ -15,7 +15,7 @@ import VocabularyPage from './pages/VocabularyPage'
 function App() {
   const [ready, setReady] = useState(false)
   const [vocabulary, setVocabulary] = useState(vocabularyBank)
-  const { history, highScore, settings, loading } = useGameSession()
+  const { history, highScore, settings, loading, saveSettings } = useGameSession()
 
   useEffect(() => {
     const initialize = async () => {
@@ -41,7 +41,7 @@ function App() {
       <div className="min-h-screen bg-slate-100 text-slate-700">
         <Header />
         <Routes>
-          <Route path="/" element={<HomePage highScore={highScore} completedGames={history.length} />} />
+          <Route path="/" element={<HomePage highScore={highScore} completedGames={history.length} settings={settings} onSaveSettings={saveSettings} />} />
           <Route path="/game" element={<GamePage settings={settings} />} />
           <Route path="/vocabulary" element={<VocabularyPage vocabulary={vocabulary} onToggleLearned={async (id, learned) => {
             await setVocabularyLearned(id, learned)

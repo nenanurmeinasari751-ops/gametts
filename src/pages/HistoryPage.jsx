@@ -10,6 +10,7 @@ const HistoryPage = ({ history }) => (
             <tr>
               <th className="px-4 py-3">Date</th>
               <th className="px-4 py-3">Player</th>
+              <th className="px-4 py-3">Class</th>
               <th className="px-4 py-3">Score</th>
               <th className="px-4 py-3">Correct</th>
               <th className="px-4 py-3">Duration</th>
@@ -18,13 +19,14 @@ const HistoryPage = ({ history }) => (
           <tbody>
             {history.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-4 py-6 text-center text-slate-500">No completed games yet.</td>
+                <td colSpan={6} className="px-4 py-6 text-center text-slate-500">No completed games yet.</td>
               </tr>
             ) : (
               history.map((item) => (
                 <tr key={item.id} className="border-t border-slate-200">
                   <td className="px-4 py-3 text-slate-600">{new Date(item.completedAt).toLocaleDateString()}</td>
                   <td className="px-4 py-3 text-slate-700">{item.playerName || 'Player'}</td>
+                  <td className="px-4 py-3 text-slate-700">{item.studentClass || '-'}</td>
                   <td className="px-4 py-3 font-bold text-slate-800">{item.score}</td>
                   <td className="px-4 py-3 text-slate-700">{item.correctWords}/{item.totalWords}</td>
                   <td className="px-4 py-3 text-slate-700">{formatTime(item.durationSeconds)}</td>

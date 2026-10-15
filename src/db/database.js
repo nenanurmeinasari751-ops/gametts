@@ -67,12 +67,15 @@ export const updateSettings = async (settings) => {
 }
 
 export const getSettings = async () => {
-  return db.settings.get('user-settings') || {
+  const savedSettings = await db.settings.get('user-settings')
+  return {
     id: 'user-settings',
     playerName: '',
+    studentClass: '',
     soundEnabled: true,
     showTranslation: true,
     timerEnabled: false,
+    ...savedSettings,
   }
 }
 

@@ -26,6 +26,7 @@ const ResultsPage = () => {
             <h2 className="text-xl font-bold text-slate-800">Summary</h2>
             <ul className="mt-4 space-y-2 text-slate-600">
               <li>Player: {result.playerName || 'Student'}</li>
+              {result.studentClass && <li>Class: {result.studentClass}</li>}
               <li>Correct words: {result.correctWords || 0} / {result.totalWords || 0}</li>
               <li>Hints used: {result.hintsUsed || 0}</li>
               <li>Completion time: {formatTime(result.durationSeconds || 0)}</li>

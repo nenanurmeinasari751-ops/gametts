@@ -15,6 +15,7 @@ const GamePage = ({ settings = {} }) => {
   const safeSettings = settings || {}
   const [selectedPuzzleId, setSelectedPuzzleId] = useState(puzzleOptions[0].id)
   const [playerName, setPlayerName] = useState(safeSettings.playerName || 'Student')
+  const [studentClass, setStudentClass] = useState(safeSettings.studentClass || '')
   const [showTranslation, setShowTranslation] = useState(safeSettings.showTranslation ?? true)
   const [timer, setTimer] = useState(0)
   const startTimeRef = useRef(Date.now())
@@ -26,6 +27,7 @@ const GamePage = ({ settings = {} }) => {
 
   useEffect(() => {
     setPlayerName(safeSettings.playerName || 'Student')
+    setStudentClass(safeSettings.studentClass || '')
     setShowTranslation(safeSettings.showTranslation ?? true)
   }, [safeSettings])
 
@@ -58,6 +60,7 @@ const GamePage = ({ settings = {} }) => {
       const session = {
         id: crypto.randomUUID(),
         playerName,
+        studentClass,
         startedAt: new Date(startTimeRef.current).toISOString(),
         completedAt: new Date().toISOString(),
         score,
@@ -71,19 +74,28 @@ const GamePage = ({ settings = {} }) => {
       clearGameProgress('current-progress').catch(() => {})
       navigate('/results', { state: { ...session, performance, wordList: selectedPuzzle.wordIds } })
     }
-  }, [correctWords, navigate, playerName, revealedLetters, score, selectedPuzzle, status, timer, totalWords])
+  }, [correctWords, navigate, playerName, revealedLetters, score, selectedPuzzle, status, studentClass, timer, totalWords])
 
   const acrossClues = puzzle.entries.filter((entry) => entry.direction === 'across')
   const downClues = puzzle.entries.filter((entry) => entry.direction === 'down')
 
-  const handleCellChange = (entryId, row, col, value) => {
-    const entry = puzzle.entries.find((item) => item.id === entryId)
-    if (!entry) return
+  const getEntriesAtCell = (row, col) => puzzle.entries.filter((entry) => (
+    entry.direction === 'across'
+      ? row === entry.startRow && col >= entry.startCol && col < entry.startCol + entry.length
+      : col === entry.startCol && row >= entry.startRow && row < entry.startRow + entry.length
+  ))
 
-    const index = entry.direction === 'across' ? col - entry.startCol : row - entry.startRow
-    const current = answers[entryId] ? answers[entryId].split('') : Array(entry.answer.length).fill('')
-    current[index] = value
-    updateAnswer(entryId, current.join(''))
+  const updateCellAnswers = (entries, row, col, value) => {
+    entries.forEach((entry) => {
+      const index = entry.direction === 'across' ? col - entry.startCol : row - entry.startRow
+      const current = answers[entry.id] ? answers[entry.id].split('') : Array(entry.answer.length).fill('')
+      current[index] = value
+      updateAnswer(entry.id, current.join(''))
+    })
+  }
+
+  const handleCellChange = (entries, row, col, value) => {
+    updateCellAnswers(entries, row, col, value)
   }
 
   const handleKeyDown = (event, row, col, entryId) => {
@@ -94,9 +106,7 @@ const GamePage = ({ settings = {} }) => {
     const index = entry.direction === 'across' ? col - entry.startCol : row - entry.startRow
     if (event.key === 'Backspace') {
       event.preventDefault()
-      const next = (answers[entryId] || '').split('')
-      next[index] = ''
-      updateAnswer(entryId, next.join(''))
+      updateCellAnswers(getEntriesAtCell(row, col), row, col, '')
       return
     }
 
@@ -104,7 +114,7 @@ const GamePage = ({ settings = {} }) => {
       event.preventDefault()
       const nextIndex = (index + 1) % entry.answer.length
       const nextCell = entry.direction === 'across' ? { row, col: entry.startCol + nextIndex } : { row: entry.startRow + nextIndex, col }
-      const targetEntry = puzzle.entries.find((item) => item.direction === item.direction && item.startRow === nextCell.row && item.startCol === nextCell.col)
+      const targetEntry = getEntriesAtCell(nextCell.row, nextCell.col).find((item) => item.direction === entry.direction)
       if (targetEntry) setSelectedEntryId(targetEntry.id)
     }
   }
@@ -129,8 +139,14 @@ const GamePage = ({ settings = {} }) => {
 
       <div className="mb-6 rounded-2xl bg-white p-4 shadow-soft">
         <div className="mb-2 flex items-center justify-between text-sm font-medium text-slate-600">
-          <span>Player</span>
-          <input value={playerName} onChange={(event) => setPlayerName(event.target.value)} className="rounded-full border border-slate-300 px-3 py-2 text-right outline-none focus:border-sky-500" />
+          <label className="flex items-center gap-3">
+            <span>Student</span>
+            <input value={playerName} onChange={(event) => setPlayerName(event.target.value)} className="min-w-0 rounded-full border border-slate-300 px-3 py-2 text-right outline-none focus:border-sky-500" />
+          </label>
+          <label className="flex items-center gap-3">
+            <span>Class</span>
+            <input value={studentClass} onChange={(event) => setStudentClass(event.target.value)} className="min-w-0 rounded-full border border-slate-300 px-3 py-2 text-right outline-none focus:border-sky-500" />
+          </label>
         </div>
         <div className="flex items-center justify-between gap-4">
           <div className="text-sm text-slate-600">Selected clue: {activeEntry ? `${activeEntry.clueEn}` : 'None'}</div>
@@ -143,7 +159,7 @@ const GamePage = ({ settings = {} }) => {
 
       <div className="mt-8 grid gap-6 xl:grid-cols-[1.5fr_0.9fr]">
         <div className="space-y-4">
-          <CrosswordGrid puzzle={puzzle} answers={answers} selectedEntryId={selectedEntryId} onSelectEntry={setSelectedEntryId} onChangeCell={handleCellChange} onKeyDown={handleKeyDown} checked={checked} showTranslation={showTranslation} />
+          <CrosswordGrid puzzle={puzzle} answers={answers} selectedEntryId={selectedEntryId} onSelectEntry={setSelectedEntryId} onChangeCell={handleCellChange} onKeyDown={handleKeyDown} checked={checked} />
           <div className="flex flex-wrap gap-3">
             <button type="button" onClick={checkAnswers} className="rounded-full bg-emerald-600 px-4 py-3 font-semibold text-white shadow-lg shadow-emerald-200 transition hover:bg-emerald-500">CHECK ANSWERS</button>
             <button type="button" onClick={revealLetter} className="rounded-full bg-amber-400 px-4 py-3 font-semibold text-slate-900 shadow-lg shadow-amber-200 transition hover:bg-amber-300"><Wand2 className="mr-2 inline h-4 w-4" />REVEAL LETTER</button>
